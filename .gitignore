@@ -1,6 +1,6 @@
 # Ignore data folder
 /data/*
-#!/data/subfolder
+!/data/regression
 
 #Ignore DS files
 **.DS_Store
