@@ -3,6 +3,8 @@ from datetime import datetime
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from pyspark.sql import SparkSession
 import re
+from pyspark.conf import SparkConf
+
 
 parser = argparse.ArgumentParser(
     description="Parse tweets JSONL file and create a regression DataFrame"
@@ -314,6 +316,20 @@ def pre_processing_pipeline(path, output_name, workers, annotation_threshold):
         .master(f"local[{workers}]")
         .getOrCreate()
     )
+
+    spark.sparkContext._conf.getAll()
+
+    conf = spark.sparkContext._conf.setAll(
+        [
+            ("spark.executor.memory", "8g"),
+            ("spark.driver.maxResultSize", "10g"),
+            ("spark.driver.memory", "15g"),
+        ]
+    )
+
+    spark.sparkContext.stop()
+
+    spark = SparkSession.builder.config(conf=conf).getOrCreate()
 
     print("**SparkContext created**")
     print(f"GUI: {spark.sparkContext.uiWebUrl}")
