@@ -1,0 +1,97 @@
+<table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>    <td>impression_count</td> <th>  R-squared:         </th> <td>   0.524</td> 
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.515</td> 
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>   59.62</td> 
+</tr>
+<tr>
+  <th>Date:</th>             <td>Thu, 25 May 2023</td> <th>  Prob (F-statistic):</th> <td>9.10e-120</td>
+</tr>
+<tr>
+  <th>Time:</th>                 <td>19:23:11</td>     <th>  Log-Likelihood:    </th> <td> -1318.3</td> 
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td>   828</td>      <th>  AIC:               </th> <td>   2669.</td> 
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td>   812</td>      <th>  BIC:               </th> <td>   2744.</td> 
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>    15</td>      <th>                     </th>     <td> </td>    
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>    
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+              <td></td>                 <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Intercept</th>                 <td>  -14.8662</td> <td>    2.284</td> <td>   -6.508</td> <td> 0.000</td> <td>  -19.350</td> <td>  -10.382</td>
+</tr>
+<tr>
+  <th>dummy_celebrities</th>         <td>    1.1284</td> <td>    0.234</td> <td>    4.818</td> <td> 0.000</td> <td>    0.669</td> <td>    1.588</td>
+</tr>
+<tr>
+  <th>dummy_famouscomedians</th>     <td>    2.4781</td> <td>    0.331</td> <td>    7.489</td> <td> 0.000</td> <td>    1.829</td> <td>    3.128</td>
+</tr>
+<tr>
+  <th>dummy_gameshow</th>            <td>   -1.1423</td> <td>    0.421</td> <td>   -2.716</td> <td> 0.007</td> <td>   -1.968</td> <td>   -0.317</td>
+</tr>
+<tr>
+  <th>dummy_jimmyfallon</th>         <td>   -2.2323</td> <td>    0.380</td> <td>   -5.868</td> <td> 0.000</td> <td>   -2.979</td> <td>   -1.486</td>
+</tr>
+<tr>
+  <th>dummy_kardashianjenner</th>    <td>   -0.6583</td> <td>    0.228</td> <td>   -2.889</td> <td> 0.004</td> <td>   -1.106</td> <td>   -0.211</td>
+</tr>
+<tr>
+  <th>dummy_kevinhart</th>           <td>   -2.4858</td> <td>    0.330</td> <td>   -7.544</td> <td> 0.000</td> <td>   -3.133</td> <td>   -1.839</td>
+</tr>
+<tr>
+  <th>dummy_moviestv</th>            <td>    0.8178</td> <td>    0.497</td> <td>    1.644</td> <td> 0.101</td> <td>   -0.159</td> <td>    1.794</td>
+</tr>
+<tr>
+  <th>dummy_pop</th>                 <td>    0.4520</td> <td>    0.216</td> <td>    2.088</td> <td> 0.037</td> <td>    0.027</td> <td>    0.877</td>
+</tr>
+<tr>
+  <th>dummy_television</th>          <td>   -0.8205</td> <td>    0.443</td> <td>   -1.853</td> <td> 0.064</td> <td>   -1.690</td> <td>    0.049</td>
+</tr>
+<tr>
+  <th>mentions_count</th>            <td>   -0.4731</td> <td>    0.098</td> <td>   -4.831</td> <td> 0.000</td> <td>   -0.665</td> <td>   -0.281</td>
+</tr>
+<tr>
+  <th>tweet_external_urls_count</th> <td>    0.8897</td> <td>    0.153</td> <td>    5.815</td> <td> 0.000</td> <td>    0.589</td> <td>    1.190</td>
+</tr>
+<tr>
+  <th>tweet_length</th>              <td>    0.2360</td> <td>    0.069</td> <td>    3.407</td> <td> 0.001</td> <td>    0.100</td> <td>    0.372</td>
+</tr>
+<tr>
+  <th>tweet_medias_count</th>        <td>    1.0131</td> <td>    0.102</td> <td>    9.979</td> <td> 0.000</td> <td>    0.814</td> <td>    1.212</td>
+</tr>
+<tr>
+  <th>tweet_period</th>              <td>    0.1597</td> <td>    0.067</td> <td>    2.395</td> <td> 0.017</td> <td>    0.029</td> <td>    0.291</td>
+</tr>
+<tr>
+  <th>followers_count</th>           <td>    1.4334</td> <td>    0.132</td> <td>   10.875</td> <td> 0.000</td> <td>    1.175</td> <td>    1.692</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>57.537</td> <th>  Durbin-Watson:     </th> <td>   1.294</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th> <td> 0.000</td> <th>  Jarque-Bera (JB):  </th> <td> 155.969</td>
+</tr>
+<tr>
+  <th>Skew:</th>          <td>-0.340</td> <th>  Prob(JB):          </th> <td>1.35e-34</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>      <td> 5.014</td> <th>  Cond. No.          </th> <td>1.03e+03</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.<br/>[2] The condition number is large, 1.03e+03. This might indicate that there are<br/>strong multicollinearity or other numerical problems.
