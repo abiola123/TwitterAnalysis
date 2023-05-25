@@ -4,6 +4,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from pyspark.sql import SparkSession
 import re
 from pyspark.conf import SparkConf
+from transformers import pipeline
 
 
 parser = argparse.ArgumentParser(
@@ -29,8 +30,15 @@ parser.add_argument(
 parser.add_argument(
     "--annotation_threshold",
     type=int,
-    default=750,
-    help="Minimum number appearances for an annotation to be considered significant",
+    default=14,
+    help="Number of annotations to consider for the regression",
+)
+
+parser.add_argument(
+    "--USA",
+    type=bool,
+    default=True,
+    help="Whether to use american time or not",
 )
 
 
@@ -55,11 +63,11 @@ def get_most_frequent_annotations(rdd, threshold):
         .sortBy(lambda x: x[1], ascending=False)
     )
 
-    most_frequent_annotations = annotations.filter(lambda x: x[1] > threshold).collect()
+    most_frequent_annotations = annotations.take(threshold)
 
     # remove the first one which is 'Politics' (present in nearly all tweets)
     # TODO: check if this is also the case for celebrities
-    most_frequent_annotations = list(map(lambda x: x[0], most_frequent_annotations))[1:]
+    most_frequent_annotations = list(map(lambda x: x[0], most_frequent_annotations))
 
     annotation_dict = {
         annotation: index for index, annotation in enumerate(most_frequent_annotations)
@@ -73,6 +81,7 @@ def extract_relevant_fields(rdd):
         rdd.filter(lambda x: x["data"])
         .flatMap(lambda x: x["data"])
         .filter(lambda x: x["entities"])
+        .filter(lambda x: x["context_annotations"] is not None)
         .map(
             lambda x: {
                 "tweet_text": x["text"],
@@ -82,9 +91,7 @@ def extract_relevant_fields(rdd):
                 "tweet_urls": x["entities"]["urls"],
                 "user_id": x["author_id"],
                 "tweet_id": x["id"],
-                "context_annotations": x["context_annotations"]
-                if x["context_annotations"]
-                else [],
+                "context_annotations": x["context_annotations"],
                 "impression_count": x["public_metrics"]["impression_count"],
             }
         )
@@ -97,6 +104,9 @@ def apply_processing_pipeline(
     most_frequent_annotations,
     annotation_dict,
     output_name,
+    zero_shot_classification,
+    path,
+    USA,
 ):
     # region INNER FUNCTIONS
     def analyse_sentiment(x):
@@ -125,14 +135,16 @@ def apply_processing_pipeline(
             "tweet_medias_count"
         ]
 
-    def get_period_of_day(x):
-        hour = datetime.strptime(x["tweet_date"], "%Y-%m-%dT%H:%M:%S.%fZ").hour
-        if hour >= 6 and hour < 12:
-            return "morning"
-        elif hour >= 12 and hour < 18:
-            return "afternoon"
+    def get_period_of_day(x, USA=True):
+        date_time = datetime.strptime(x["tweet_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+
+        # transform to american time from UTC
+        if USA:
+            date_time = date_time.replace(hour=(date_time.hour - 5) % 24)
         else:
-            return "night"
+            date_time = date_time.replace(hour=(date_time.hour + 1) % 24)
+
+        return date_time.hour
 
     def one_hot_encoding(x, encoding_dict):
         encoding = [0] * len(encoding_dict)
@@ -168,21 +180,39 @@ def apply_processing_pipeline(
 
         return x
 
-    def add_dummy_tweet_period(x):
-        time_of_day = x["tweet_period"]
-
-        x["dummy_tweet_period_morning"] = 0
-        x["dummy_tweet_period_afternoon"] = 0
-        x["dummy_tweet_period_night"] = 0
-
-        x[f"dummy_tweet_period_{time_of_day}"] = 1
-
-        return x
-
     # endregion
 
     # region PROCESSING PIPELINE
-    # adding sentiment analysis on the tweet text using vader to the data
+
+    # map context annotations to clusters
+    def group_context_annotations(x, most_frequent_annotations, annotation_dict):
+        # first we see if the annotations of our tweet and the most frequent annotations overlap
+        annotation_set = set([y["entity"]["name"] for y in x["context_annotations"]])
+
+        intersection = annotation_set.intersection(most_frequent_annotations)
+
+        if len(intersection) > 0:
+            x["context_annotations"] = list(intersection)
+
+        else:
+            # zero shot here
+
+            prepared_text = " ".join(annotation_set)
+
+            zero_shot_labels = zero_shot_classification(
+                prepared_text, most_frequent_annotations
+            )
+
+            x["context_annotations"] = zero_shot_labels
+
+        return x
+
+    json_rdd_data_fields = json_rdd_data_fields.map(
+        lambda x: group_context_annotations(
+            x, most_frequent_annotations, annotation_dict
+        )
+    )
+
     json_rdd_data_fields = json_rdd_data_fields.map(
         lambda x: add_key_value(
             x, "tweet_sentiment", analyse_sentiment(x["tweet_text"])
@@ -227,7 +257,7 @@ def apply_processing_pipeline(
 
     # adding the period of the day to the data
     json_rdd_data_fields = json_rdd_data_fields.map(
-        lambda x: add_key_value(x, "tweet_period", get_period_of_day(x))
+        lambda x: add_key_value(x, "tweet_period", get_period_of_day(x, USA))
     )
 
     json_rdd_data_fields = json_rdd_data_fields.map(
@@ -258,7 +288,7 @@ def apply_processing_pipeline(
         lambda x: add_dummy_encoding(x, most_frequent_annotations)
     )
 
-    json_rdd_data_fields = json_rdd_data_fields.map(lambda x: add_dummy_tweet_period(x))
+    # json_rdd_data_fields = json_rdd_data_fields.map(lambda x: add_dummy_tweet_period(x))
 
     # 2. Create a dataframe from the rdd
 
@@ -272,7 +302,7 @@ def apply_processing_pipeline(
             "encoded_annotations",
             "tweet_date",
             "tweet_media_keys",
-            "tweet_period",
+            # "tweet_period",
         )
         .persist()
     )
@@ -310,26 +340,13 @@ def apply_processing_pipeline(
     return regression_df_pd
 
 
-def pre_processing_pipeline(path, output_name, workers, annotation_threshold):
+def pre_processing_pipeline(path, output_name, workers, annotation_threshold, USA):
     spark = (
         SparkSession.builder.appName("tweet_loader")
         .master(f"local[{workers}]")
+        .config("spark.driver.memory", "10g")
         .getOrCreate()
     )
-
-    spark.sparkContext._conf.getAll()
-
-    conf = spark.sparkContext._conf.setAll(
-        [
-            ("spark.executor.memory", "8g"),
-            ("spark.driver.maxResultSize", "10g"),
-            ("spark.driver.memory", "15g"),
-        ]
-    )
-
-    spark.sparkContext.stop()
-
-    spark = SparkSession.builder.config(conf=conf).getOrCreate()
 
     print("**SparkContext created**")
     print(f"GUI: {spark.sparkContext.uiWebUrl}")
@@ -341,10 +358,37 @@ def pre_processing_pipeline(path, output_name, workers, annotation_threshold):
         rdd, annotation_threshold
     )
 
+    print(f"Most frequent annotations: {most_frequent_annotations}\n")
+
+    print(f"Annotation dictionary: {annotation_dict}\n")
+
     rdd_subset = extract_relevant_fields(rdd)
 
+    pipe = spark.sparkContext.broadcast(pipeline(model="valhalla/distilbart-mnli-12-9"))
+
+    def zero_shot_classification(text, labels):
+        resp = pipe.value(text, labels, multi_label=False)
+
+        labels_scores = zip(resp["labels"], resp["scores"])
+
+        labels_scores = filter(lambda x: x[1] > 0.3, labels_scores)
+
+        predicted_labels = list(map(lambda x: x[0], labels_scores))
+
+        if len(predicted_labels) > 0:
+            return predicted_labels
+        else:
+            return [resp["labels"][0]]
+
     regression_df = apply_processing_pipeline(
-        rdd, rdd_subset, most_frequent_annotations, annotation_dict, output_name
+        rdd,
+        rdd_subset,
+        most_frequent_annotations,
+        annotation_dict,
+        output_name,
+        zero_shot_classification,
+        path,
+        USA,
     )
 
     return regression_df
@@ -357,5 +401,6 @@ if __name__ == "__main__":
     output_name = args.output_name
     workers = args.workers
     annotation_threshold = args.annotation_threshold
+    USA = args.USA
 
-    pre_processing_pipeline(path, output_name, workers, annotation_threshold)
+    pre_processing_pipeline(path, output_name, workers, annotation_threshold, USA)
