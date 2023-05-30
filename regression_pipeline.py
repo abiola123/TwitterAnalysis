@@ -159,6 +159,7 @@ def regression(path, threshold=1e2):
     # Load data
     regression_df_pd = pd.read_csv(path)
     regression_df_pd = regression_df_pd.drop('tweet_text', axis=1)
+    regression_df_pd_for_output = regression_df_pd.copy()
     
     #======================#
     #   FIRST REGRESSION   #
@@ -219,6 +220,8 @@ def regression(path, threshold=1e2):
     #======================#
     # Plot residual plot
     path_name = os.path.join(path_name_root, "residual_plot", NAME_DF)
+    regression_df_pd_for_output = regression_df_pd_for_output[regression_df_pd_for_output['impression_count'] >= threshold].copy()
+    regression_df_pd_for_output = regression_df_pd_for_output[significant_variables]
     plot_predicted_vs_actual(regression_df_pd, significant_variables, path_name)
 
 
@@ -250,11 +253,11 @@ def regression(path, threshold=1e2):
     with open(path_final, 'w') as f:
         f.write(res_final_html)
 
-    return res, res_threshold, res_log, res_final, regression_df_pd
+    return res, res_threshold, res_log, res_final, regression_df_pd_for_output
 
 if __name__ == "__main__":
     args = parser.parse_args()
     NAME_DF = args.path.split('/')[-1].split('.')[0]#[:-3]
     print(NAME_DF)
-    _, _, _, res, regression_df_pd  = regression(args.path, args.threshold)
-    regression_df_pd.to_csv(os.path.join(os.getcwd(), "data", "regression", "final_reg_df", NAME_DF+"_final_reg.csv"), index=False)
+    _, _, _, res, final_df  = regression(args.path, args.threshold)
+    final_df.to_csv(os.path.join(os.getcwd(), "data", "regression", "final_reg_df", NAME_DF+"_final_reg.csv"), index=False)
