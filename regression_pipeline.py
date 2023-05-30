@@ -6,6 +6,8 @@ import argparse
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style('darkgrid')
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser(
     description="Take the path to a regression csv file, perform multiple regressions and save the results for each regression in seperate html files"
@@ -22,13 +24,6 @@ parser.add_argument(
     default=1e2,
     help="minimum impresion count (used to filter out outliers)",
 )
-
-parser.add_argument(
-    "--name",
-    type=str,
-    help="name of the dataset used to save the coefficients plot",
-)
-
 
 
 def create_regressor_columns_string(columns):
@@ -73,7 +68,7 @@ def assign_stars(row):
         return name
     
 # Define function to output plot of the model coefficients
-def coefplot(results, name):
+def coefplot(results, path_name):
     ### PREPARE DATA FOR PLOTTING
     # Create dataframe of results summary 
     coef_df = pd.DataFrame(results.summary().tables[1].data)
@@ -125,13 +120,41 @@ def coefplot(results, name):
     # Rotate y ticks and move to the right side
     ax.yaxis.tick_right()
     plt.yticks(rotation=90, fontsize=15)
-    
-    plt.savefig(name+'_coefficient_plot.png', bbox_inches='tight', dpi=300)
-    plt.show()
 
+    plt.savefig(path_name+'_coef_plot.png', bbox_inches='tight', dpi=300)
     return list(columns[2:])
 
+# Perform regression with splitting into training and validation set and compute mse
+def perform_regression_with_split(df, significant_variables):
+    # Split into train and validation set
+    train, validation = train_test_split(df, test_size=0.2, random_state=42)
+    # Perform regression on train set
+    res = perform_regression(train, significant_variables)
+    # Compute mse on validation set
+    y_pred = res.predict(validation[significant_variables])
+    y_true = validation['impression_count']
+    delta_y = y_pred - y_true
+    exp_y_pred = np.exp(y_pred) - 1
+    rmse = np.sqrt(np.mean(exp_y_pred**2))
+    print(f'RMSE: {rmse}')
+    mse = mean_squared_error(y_true, y_pred)
+    print(f'MSE: {mse}')
+    return res
+
+# Plot predicted impression count vs actual impression count
+def plot_predicted_vs_actual(df, significant_columns, path_name):
+    res = perform_regression(df, significant_columns)
+    y_pred = res.predict(df[significant_columns])
+    y_true = df['impression_count']
+
+    plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], 'r--', lw=2)
+    plt.scatter(y_true, y_pred)
+    plt.xlabel('Actual')
+    plt.ylabel('Predicted')
+    plt.savefig(path_name+'predicted_vs_actual.png', bbox_inches='tight', dpi=300)
+
 def regression(path, threshold=1e2):
+    NAME_DF = path.split('/')[-1].split('.')[0]#[:-3]
 
     # Load data
     regression_df_pd = pd.read_csv(path)
@@ -179,38 +202,59 @@ def regression(path, threshold=1e2):
     print(f'Significant variables ({len(significant_variables)}): {significant_variables}')
 
     #======================#
+    #    PLOT COEFF        #
+    #======================#
+    path_name_root = os.path.join(os.getcwd(), "data", "regression")
+    path_name = os.path.join(path_name_root, "coefplot", NAME_DF)
+    coefplot(res_final, path_name)
+
+    #======================#
+    #    EVALUATE MODEL    #
+    #======================#
+    # Evaluate model
+    perform_regression_with_split(regression_df_pd, significant_variables)
+
+    #======================#
+    #   RESIDUAL PLOT      #
+    #======================#
+    # Plot residual plot
+    path_name = os.path.join(path_name_root, "residual_plot", NAME_DF)
+    plot_predicted_vs_actual(regression_df_pd, significant_variables, path_name)
+
+
+    #======================#
     #   SAVE AS HTML       #
     #======================#
     # Save first res as html
     res_html = res.summary().as_html()
-    name = path.split('/')[-1].split('.')[0][:-3]
     path_root = os.path.join(os.getcwd(), "data", "regression", "html_regression")
-    path = os.path.join(path_root, name+".html")
+    path = os.path.join(path_root, NAME_DF+".html")
     with open(path, 'w') as f:
         f.write(res_html)
 
     # Save second res as html
     res_thresh_html = res_threshold.summary().as_html()
-    path_opti = os.path.join(path_root, name+"_threshold.html")
+    path_opti = os.path.join(path_root, NAME_DF+"_threshold.html")
     with open(path_opti, 'w') as f:
         f.write(res_thresh_html)
 
     # Save third res as html
     res_log_html = res_log.summary().as_html()
-    path_log = os.path.join(path_root, name+"_log.html")
+    path_log = os.path.join(path_root, NAME_DF+"_log.html")
     with open(path_log, 'w') as f:
         f.write(res_log_html)
 
     # Save final res as html
     res_final_html = res_final.summary().as_html()
-    path_final = os.path.join(path_root, name+"_final.html")
+    path_final = os.path.join(path_root, NAME_DF+"_final.html")
     with open(path_final, 'w') as f:
         f.write(res_final_html)
 
-    return res, res_threshold, res_log, res_final
-
+    return res, res_threshold, res_log, res_final, regression_df_pd
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    _, _, _, res = regression(args.path, args.threshold)
-    coefplot(res, args.name)
+    NAME_DF = args.path.split('/')[-1].split('.')[0]#[:-3]
+    print(NAME_DF)
+    _, _, _, res, regression_df_pd  = regression(args.path, args.threshold)
+    regression_df_pd.to_csv(os.path.join(os.getcwd(), "data", "regression", "final_reg_df", NAME_DF+"_final_reg.csv"), index=False)
