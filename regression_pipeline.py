@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import os
 import argparse
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_style('darkgrid')
 
 parser = argparse.ArgumentParser(
     description="Take the path to a regression csv file, perform multiple regressions and save the results for each regression in seperate html files"
@@ -18,6 +21,12 @@ parser.add_argument(
     type=int,
     default=1e2,
     help="minimum impresion count (used to filter out outliers)",
+)
+
+parser.add_argument(
+    "--name",
+    type=str,
+    help="name of the dataset used to save the coefficients plot",
 )
 
 
@@ -49,6 +58,78 @@ def keep_significant_var(p_values):
         pass
 
     return significant_variables
+
+# Assign significant levels stars to each variable name
+def assign_stars(row):
+    p_value = float(row['P>|t|'])
+    name = row[0].replace('_', ' ').title()
+    if p_value <= 0.01:
+        return name + ' ***'
+    elif p_value <= 0.05:
+        return name + ' **'
+    elif p_value <= 0.1:
+        return name + ' *'
+    else:
+        return name
+    
+# Define function to output plot of the model coefficients
+def coefplot(results, name):
+    ### PREPARE DATA FOR PLOTTING
+    # Create dataframe of results summary 
+    coef_df = pd.DataFrame(results.summary().tables[1].data)
+    
+    # Add column names and drop the extra row with column labels
+    coef_df.columns = coef_df.iloc[0]
+    columns = coef_df.iloc[:,0]
+    coef_df=coef_df.drop(0)
+
+    # Rename column 0 and append * ** or *** for significance levels
+    # coef_df["index"] = coef_df.apply(lambda x: assign_stars(x), axis=1)
+
+    # Set index to variable names
+    coef_df = coef_df.set_index(coef_df.apply(lambda x: assign_stars(x), axis=1))
+    coef_df = coef_df.drop(coef_df.columns[0], axis=1)
+
+    # Change datatype from object to float
+    coef_df = coef_df.astype(float)
+
+    # Get errors; (coef - lower bound of conf interval)
+    errors = coef_df['coef'] - coef_df['[0.025']
+    coef_df['errors'] = errors
+
+    # Sort values by coef ascending
+    coef_df = coef_df.sort_values(by=['coef'])
+
+    ### PLOT COEFFICIENTS
+    variables = list(coef_df.index.values)
+    coef_df['variables'] = variables
+
+    # Define figure, axes, and plot
+    fig, ax = plt.subplots(figsize=(15, 10))
+    
+    # Error bars for 95% confidence interval
+    # Can increase capsize to add whiskers
+    coef_df.plot(x='variables', y='coef', kind='bar', ax=ax, color='none', fontsize=15, ecolor='steelblue', capsize=0, yerr='errors', legend=False)
+    
+    # Coefficients
+    ax.scatter(x=np.arange(coef_df.shape[0]), marker='o', s=80, y=coef_df['coef'], color='steelblue')
+    
+    # Line to define zero on the y-axis
+    ax.axhline(y=0, linestyle='--', color='red', linewidth=1)
+    
+    # Set title & labels
+    #plt.title('Coefficients of Features - 95% Confidence Intervals',fontsize=20)
+    ax.set_ylabel('Coefficients',fontsize=15)
+    ax.set_xlabel('',fontsize=15)
+
+    # Rotate y ticks and move to the right side
+    ax.yaxis.tick_right()
+    plt.yticks(rotation=90, fontsize=15)
+    
+    plt.savefig(name+'_coefficient_plot.png', bbox_inches='tight', dpi=300)
+    plt.show()
+
+    return list(columns[2:])
 
 def regression(path, threshold=1e2):
 
@@ -131,4 +212,5 @@ def regression(path, threshold=1e2):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    regression(args.path, args.threshold)
+    _, _, _, res = regression(args.path, args.threshold)
+    coefplot(res, args.name)
