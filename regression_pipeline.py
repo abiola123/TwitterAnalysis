@@ -221,7 +221,7 @@ def regression(path, threshold=1e2):
     # Plot residual plot
     path_name = os.path.join(path_name_root, "residual_plot", NAME_DF)
     regression_df_pd_for_output = regression_df_pd_for_output[regression_df_pd_for_output['impression_count'] >= threshold].copy()
-    regression_df_pd_for_output = regression_df_pd_for_output[significant_variables]
+    regression_df_pd_for_output = regression_df_pd_for_output[significant_variables + ['impression_count']]
     plot_predicted_vs_actual(regression_df_pd, significant_variables, path_name)
 
 
