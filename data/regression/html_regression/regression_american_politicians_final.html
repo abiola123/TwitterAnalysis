@@ -1,0 +1,112 @@
+<table class="simpletable">
+<caption>OLS Regression Results</caption>
+<tr>
+  <th>Dep. Variable:</th>    <td>impression_count</td> <th>  R-squared:         </th> <td>   0.481</td> 
+</tr>
+<tr>
+  <th>Model:</th>                   <td>OLS</td>       <th>  Adj. R-squared:    </th> <td>   0.481</td> 
+</tr>
+<tr>
+  <th>Method:</th>             <td>Least Squares</td>  <th>  F-statistic:       </th> <td>   1417.</td> 
+</tr>
+<tr>
+  <th>Date:</th>             <td>Wed, 07 Jun 2023</td> <th>  Prob (F-statistic):</th>  <td>  0.00</td>  
+</tr>
+<tr>
+  <th>Time:</th>                 <td>22:40:17</td>     <th>  Log-Likelihood:    </th> <td> -48607.</td> 
+</tr>
+<tr>
+  <th>No. Observations:</th>      <td> 30591</td>      <th>  AIC:               </th> <td>9.726e+04</td>
+</tr>
+<tr>
+  <th>Df Residuals:</th>          <td> 30570</td>      <th>  BIC:               </th> <td>9.743e+04</td>
+</tr>
+<tr>
+  <th>Df Model:</th>              <td>    20</td>      <th>                     </th>     <td> </td>    
+</tr>
+<tr>
+  <th>Covariance Type:</th>      <td>nonrobust</td>    <th>                     </th>     <td> </td>    
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+                  <td></td>                     <th>coef</th>     <th>std err</th>      <th>t</th>      <th>P>|t|</th>  <th>[0.025</th>    <th>0.975]</th>  
+</tr>
+<tr>
+  <th>Intercept</th>                         <td>    1.8765</td> <td>    0.121</td> <td>   15.455</td> <td> 0.000</td> <td>    1.638</td> <td>    2.114</td>
+</tr>
+<tr>
+  <th>dummy_financialservicesbusiness</th>   <td>    0.2263</td> <td>    0.050</td> <td>    4.508</td> <td> 0.000</td> <td>    0.128</td> <td>    0.325</td>
+</tr>
+<tr>
+  <th>dummy_governmentinstitutions</th>      <td>    0.4383</td> <td>    0.049</td> <td>    8.968</td> <td> 0.000</td> <td>    0.342</td> <td>    0.534</td>
+</tr>
+<tr>
+  <th>dummy_jeffmerkley</th>                 <td>   -1.2786</td> <td>    0.048</td> <td>  -26.555</td> <td> 0.000</td> <td>   -1.373</td> <td>   -1.184</td>
+</tr>
+<tr>
+  <th>dummy_joebiden</th>                    <td>    0.5168</td> <td>    0.034</td> <td>   15.050</td> <td> 0.000</td> <td>    0.449</td> <td>    0.584</td>
+</tr>
+<tr>
+  <th>dummy_johncornyn</th>                  <td>   -0.8507</td> <td>    0.060</td> <td>  -14.127</td> <td> 0.000</td> <td>   -0.969</td> <td>   -0.733</td>
+</tr>
+<tr>
+  <th>dummy_northcarolina</th>               <td>    0.8020</td> <td>    0.055</td> <td>   14.685</td> <td> 0.000</td> <td>    0.695</td> <td>    0.909</td>
+</tr>
+<tr>
+  <th>dummy_politicalfigures</th>            <td>   -0.9645</td> <td>    0.054</td> <td>  -17.728</td> <td> 0.000</td> <td>   -1.071</td> <td>   -0.858</td>
+</tr>
+<tr>
+  <th>dummy_politics</th>                    <td>   -0.3599</td> <td>    0.046</td> <td>   -7.897</td> <td> 0.000</td> <td>   -0.449</td> <td>   -0.271</td>
+</tr>
+<tr>
+  <th>dummy_tedcruz</th>                     <td>    0.5938</td> <td>    0.061</td> <td>    9.808</td> <td> 0.000</td> <td>    0.475</td> <td>    0.712</td>
+</tr>
+<tr>
+  <th>dummy_unitedstatescongress</th>        <td>   -0.3194</td> <td>    0.067</td> <td>   -4.782</td> <td> 0.000</td> <td>   -0.450</td> <td>   -0.188</td>
+</tr>
+<tr>
+  <th>dummy_unitedstatespoliticalissues</th> <td>   -0.5660</td> <td>    0.050</td> <td>  -11.248</td> <td> 0.000</td> <td>   -0.665</td> <td>   -0.467</td>
+</tr>
+<tr>
+  <th>dummy_unitedstatespolitics</th>        <td>    0.5006</td> <td>    0.045</td> <td>   11.083</td> <td> 0.000</td> <td>    0.412</td> <td>    0.589</td>
+</tr>
+<tr>
+  <th>dummy_wisconsin</th>                   <td>    0.2205</td> <td>    0.052</td> <td>    4.260</td> <td> 0.000</td> <td>    0.119</td> <td>    0.322</td>
+</tr>
+<tr>
+  <th>hashtags_count</th>                    <td>   -0.1344</td> <td>    0.022</td> <td>   -5.996</td> <td> 0.000</td> <td>   -0.178</td> <td>   -0.090</td>
+</tr>
+<tr>
+  <th>mentions_count</th>                    <td>   -0.2342</td> <td>    0.018</td> <td>  -13.199</td> <td> 0.000</td> <td>   -0.269</td> <td>   -0.199</td>
+</tr>
+<tr>
+  <th>tweet_length</th>                      <td>   -0.1381</td> <td>    0.015</td> <td>   -9.479</td> <td> 0.000</td> <td>   -0.167</td> <td>   -0.110</td>
+</tr>
+<tr>
+  <th>tweet_medias_count</th>                <td>    0.4248</td> <td>    0.016</td> <td>   26.441</td> <td> 0.000</td> <td>    0.393</td> <td>    0.456</td>
+</tr>
+<tr>
+  <th>tweet_period</th>                      <td>   -0.0502</td> <td>    0.022</td> <td>   -2.238</td> <td> 0.025</td> <td>   -0.094</td> <td>   -0.006</td>
+</tr>
+<tr>
+  <th>tweet_sentiment</th>                   <td>   -0.0644</td> <td>    0.010</td> <td>   -6.579</td> <td> 0.000</td> <td>   -0.084</td> <td>   -0.045</td>
+</tr>
+<tr>
+  <th>followers_count</th>                   <td>    0.7292</td> <td>    0.005</td> <td>  138.505</td> <td> 0.000</td> <td>    0.719</td> <td>    0.740</td>
+</tr>
+</table>
+<table class="simpletable">
+<tr>
+  <th>Omnibus:</th>       <td>2877.009</td> <th>  Durbin-Watson:     </th> <td>   1.102</td>
+</tr>
+<tr>
+  <th>Prob(Omnibus):</th>  <td> 0.000</td>  <th>  Jarque-Bera (JB):  </th> <td>5825.308</td>
+</tr>
+<tr>
+  <th>Skew:</th>           <td> 0.620</td>  <th>  Prob(JB):          </th> <td>    0.00</td>
+</tr>
+<tr>
+  <th>Kurtosis:</th>       <td> 4.742</td>  <th>  Cond. No.          </th> <td>    261.</td>
+</tr>
+</table><br/><br/>Notes:<br/>[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
